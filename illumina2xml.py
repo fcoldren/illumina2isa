@@ -38,12 +38,29 @@ f1 = "/Users/fcoldren/scripts_tools/my_scripts/Illumina_files/DemultiplexConfig.
 demultiplex_config_tree = ET.parse(f1)
 demultiplex_root = demultiplex_config_tree.getroot()
 list_of_samples = []
+for element in demultiplex_root.iter('Lane'):
+    for child in element:
+        if child.get('Index') != "Undetermined":
+            child.set('lane',element.get('Number'))
+            sample_name = child.get('SampleId')
+            assay = make_new_sample_entry(root,experiment_root,sample_name)
+
+
 for element in demultiplex_root.iter('Sample'):
-    if element.get('Index') != "Undetermined":
-        list_of_samples.append(element.get('SampleId'))
+    for item in assay.iter('Sample'):
+        if item.get('name') == str(element.get('SampleId')):
+            for child in item.iter():
+                if child.get('value') == "Comment[PathBio submission]":
+                    child.text = element.get('ProjectId')
+                if child.get('value') == "Parameter Value[mid]":
+                    child.text = element.get('Index')
+                if child.get('value') == "Parameter Value[lane]":
+                    child.text = element.get('lane')
 
-for i in list_of_samples:
-    test = make_new_sample_entry(root,experiment_root,i)
 
-ET.dump(test)
+ET.dump(assay)
+
+        
+
+
 
