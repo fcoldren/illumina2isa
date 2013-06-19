@@ -45,6 +45,15 @@ for element in demultiplex_root.iter('Lane'):
             sample_name = child.get('SampleId')
             assay = make_new_sample_entry(root,experiment_root,sample_name)
 
+parameters = {}
+# get non-sample specific info from DemultiplexConfig.xml
+for element in demultiplex_root:
+    if element.tag == "FlowcellInfo":
+        parameters["Parameter Value[flow cell]"] = element.get('ID')
+    if element.tag == "Software":
+        parameters["Parameter Value[demultiplex]"] = element.get('Version')
+        
+
 # this will not fill in the field Parameter Value[sample1]
 # parses details from DemultiplexConfig.xml into xml structure
 for element in demultiplex_root.iter('Sample'):
@@ -60,17 +69,16 @@ for element in demultiplex_root.iter('Sample'):
 
 # parse runParameters.xml
 f2 = "/Users/fcoldren/scripts_tools/my_scripts/Illumina_files/runParameters.xml"
-def parse_runParameters4isa(file):
+def parse_runParameters4isa(file,run_parameters_to_write):
     runparameters_config_tree = ET.parse(file)
     runparameters_root = runparameters_config_tree.getroot()
-    run_parameters_to_write = {}
     p = []
     for element in runparameters_root.iter():
         if element.tag == "Pe":
             p.append(((element.text).strip()).split('\n')) # to clean up weird whitespace in this text
             run_parameters_to_write["Parameter Value[cBot clustering kit]"] = p[0][0]
         if element.tag == "RunStartDate":
-            run_parameters_to_write["Date"] = element.text
+            run_parameters_to_write["Date"] = element.text # date for sequencing
         if element.tag == "ScannerID":
             run_parameters_to_write["Parameter Value[sequencing instrument ID]"] = element.text
         if element.tag == "ApplicationName":
@@ -79,21 +87,31 @@ def parse_runParameters4isa(file):
             software_version = str(element.text)
         if element.tag == "RTAVersion":
             rtaversion = element.text
+        if element.tag == "FCPosition":
+            run_parameters_to_write["Parameter Value[slot]"] = element.text
     software_full = software + " " + software_version
     rta = "RTA" + " " + rtaversion
     run_parameters_to_write["Parameter Value[sequencing instrument control software]"] = software_full
     run_parameters_to_write["Parameter Value[base caller]"] = rta
     run_parameters_to_write["Parameter Value[quality score]"] = rta
     return run_parameters_to_write
-run = parse_runParameters4isa(f2)
+run = parse_runParameters4isa(f2,parameters)
 
-# fill in values parsed from runParameters.xml to the xml structure for the samples
+# fill in experiment wide parameters parsed from runParameters.xml
+# and DemultiplexConfig.xml to the xml structure for the samples
 
 for element in assay.iter():
     for key in run:
-        if key != date and element.get('value') == key:
-            
-            
+        if key != "Date" and element.get('value') == key:
+            element.text = run[key]
+# reformat date
+for element in assay.iter('column-header'):
+    if element.get('protocol') == "nucleic acid sequencing":
+        for child in element:
+            if child.get('value') == "Date":
+                child.text = run["Date"]
+
+ET.dump(assay)
         
 
 
