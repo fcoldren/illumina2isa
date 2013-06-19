@@ -1,16 +1,14 @@
 #!/usr/bin/env python
 
 import xml.etree.ElementTree as ET
+import sys
 
 config_file = "/Users/fcoldren/src/isatab-templates/assay_configuration_files/transcription_seq.xml"
-
 a_config_tree = ET.parse(config_file)
 root = a_config_tree.getroot()
-
 prefix = "{http://www.ebi.ac.uk/bii/isatab_configuration#}"
 field_ = prefix + "field"
 unit_ = prefix + "unit-field"
-
 experiment_root = ET.Element("Experiment")
 
 def make_new_sample_entry(root_config,root_experiment,sample_name):
@@ -34,9 +32,18 @@ def make_new_sample_entry(root_config,root_experiment,sample_name):
                 ET.SubElement(last_node,"column-header",value='Unit', unit_attr1 = 'Term Source REF', unit_attr2 = 'Term Accession Number')
     return root_experiment
 
-samples = ["Sample10","Sample11","Sample13"]
+# "/Users/fcoldren/scripts_tools/my_scripts/Illumina_files/DemultiplexConfig.xml"
+# this is the DemultiplexConfig.xml
+f1 = "/Users/fcoldren/scripts_tools/my_scripts/Illumina_files/DemultiplexConfig.xml"
+demultiplex_config_tree = ET.parse(f1)
+demultiplex_root = demultiplex_config_tree.getroot()
+list_of_samples = []
+for element in demultiplex_root.iter('Sample'):
+    if element.get('Index') != "Undetermined":
+        list_of_samples.append(element.get('SampleId'))
 
-for i in samples:
+for i in list_of_samples:
     test = make_new_sample_entry(root,experiment_root,i)
 
 ET.dump(test)
+
