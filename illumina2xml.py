@@ -14,26 +14,35 @@ import os
 # test locally using "/Users/fcoldren/scripts_tools/my_scripts/Illumina_files"
 d = sys.argv[1]
 
+
 assay_config_file = "/Users/fcoldren/src/isatab-templates/ISATab_configuration_files_2012-06-20/transcription_seq.xml"
 #study_config_file = "/Users/fcoldren/src/isatab-templates//Users/fcoldren/src/isatab-templates/ISATab_configuration_files_2012-06-20/studySample.xml"
 #investigation_config_file ="/Users/fcoldren/src/isatab-templates//Users/fcoldren/src/isatab-templates/ISATab_configuration_files_2012-06-20/investigation.xml"
 
 def check(dir):
+    """ Checks that specified directory exists and is specified correctly """
+    if os.path.exists(dir) is False:
+        print dir," directory does not exist"
+        quit()
+    if dir.endswith("/") is False:
+        dir = dir + "/"
     demultiplex_file_opt1 = dir + "Unaligned/DemultiplexConfig.xml"
     demultiplex_file_opt2 = dir + "DemultiplexConfig.xml"
     run_parameters_file = dir + "runParameters.xml"
     if (os.path.exists(demultiplex_file_opt1) is False) or (os.path.exists(run_parameters_file) is False):
         if (os.path.exists(demultiplex_file_opt2) is False) or (os.path.exists(run_parameters_file) is False):
-            print "A required Illumina file is missing" #needs better message
+            print "A required Illumina file is missing"
             quit()
-    elif (os.path.exists(demultiplex_file_opt1) is True):
+    if (os.path.exists(demultiplex_file_opt1) is True):
         xml_files_to_parse = (demultiplex_file_opt1,run_parameters_file)
     elif (os.path.exists(demultiplex_file_opt2) is True):
         xml_files_to_parse = (demultiplex_file_opt2,run_parameters_file)
+    print xml_files_to_parse
     return xml_files_to_parse
 
+
 def make_ISATab_dir(dir):
-    ISATab_dir = d + "/ISATAB"
+    ISATab_dir = d + "/ISATAB/"
     if os.path.exists(ISATab_dir) is False:
         os.makedirs(ISATab_dir)
     return ISATab_dir
