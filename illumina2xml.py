@@ -2,16 +2,33 @@
 
 import xml.etree.ElementTree as ET
 import sys
+import os
 
 # files required for this script to run
 # 1: ISA-Tab configuration file
 # 2: DemultiplexConfig.xml
 # 3: runParameters.xml
 
-config_file = "/Users/fcoldren/src/isatab-templates/assay_configuration_files/transcription_seq.xml"
-f1 = "/Users/fcoldren/scripts_tools/my_scripts/Illumina_files/DemultiplexConfig.xml"
-f2 = "/Users/fcoldren/scripts_tools/my_scripts/Illumina_files/runParameters.xml"
+# directory where DemultiplexConfig.xml and runParameters.xml live
+# test locally using "/Users/fcoldren/scripts_tools/my_scripts/Illumina_files"
+d = sys.argv[2]
 
+#ISATab_dir = d + "/ISATAB"
+#os.makedirs(ISATab_dir)
+
+def check(dir):
+    demultiplex_file = dir + "/" + "Unaligned/DemultiplexConfig.xml"
+    run_parameters_file = dir + "/" + "runParameters.xml"
+    xml_files_to_parse = (demultiplex_file,run_parameters_file)
+    if (os.path.exists(demultiplex_file) is False) or (os.path.exists(run_parameters_file) is False):
+        print demultiplex_file + " or " + run_parameters_file + " does not exist"
+        quit()
+    else:
+        return xml_files_to_parse
+a = check(d)
+print a
+
+config_file = "/Users/fcoldren/src/isatab-templates/assay_configuration_files/transcription_seq.xml"
 output_txt_file = sys.argv[1]
 
 a_config_tree = ET.parse(config_file)
@@ -24,7 +41,7 @@ experiment_root = ET.Element("Experiment")
 # "/Users/fcoldren/scripts_tools/my_scripts/Illumina_files/DemultiplexConfig.xml"
 # this is the DemultiplexConfig.xml
 parameters = {}
-demultiplex_config_tree = ET.parse(f1)
+demultiplex_config_tree = ET.parse(a[0])
 demultiplex_root = demultiplex_config_tree.getroot()
 
 def make_new_sample_entry(root_config,root_experiment,sample_name):
@@ -127,7 +144,7 @@ for element in demultiplex_root.iter('Sample'):
                 if child.get('value') == "Parameter Value[lane]":
                     child.text = element.get('lane')
 
-run = parse_runParameters4isa(f2,parameters)
+run = parse_runParameters4isa(a[1],parameters)
 
 # fill in experiment wide parameters parsed from runParameters.xml
 # and DemultiplexConfig.xml to the xml structure for the samples
@@ -156,7 +173,6 @@ for element in assay.iter("Sample"):
         outfile.write("\t".join(headers) + "\n")
         count = 1
         sample_row = make_sample_row_as_list(element)
-        print sample_row
     else:
         sample_row = make_sample_row_as_list(element)
     all.append(sample_row)
