@@ -4,45 +4,39 @@ import xml.etree.ElementTree as ET
 import sys
 import os
 
+# on command line first input is directory where Illumina files live
 # files required for this script to run
-# 1: ISA-Tab configuration file
+# 1: ISA-Tab configuration files
 # 2: DemultiplexConfig.xml
 # 3: runParameters.xml
 
 # directory where DemultiplexConfig.xml and runParameters.xml live
 # test locally using "/Users/fcoldren/scripts_tools/my_scripts/Illumina_files"
-d = sys.argv[2]
+d = sys.argv[1]
 
-#ISATab_dir = d + "/ISATAB"
-#os.makedirs(ISATab_dir)
+assay_config_file = "/Users/fcoldren/src/isatab-templates/ISATab_configuration_files_2012-06-20/transcription_seq.xml"
+#study_config_file = "/Users/fcoldren/src/isatab-templates//Users/fcoldren/src/isatab-templates/ISATab_configuration_files_2012-06-20/studySample.xml"
+#investigation_config_file ="/Users/fcoldren/src/isatab-templates//Users/fcoldren/src/isatab-templates/ISATab_configuration_files_2012-06-20/investigation.xml"
 
 def check(dir):
-    demultiplex_file = dir + "/" + "Unaligned/DemultiplexConfig.xml"
-    run_parameters_file = dir + "/" + "runParameters.xml"
-    xml_files_to_parse = (demultiplex_file,run_parameters_file)
-    if (os.path.exists(demultiplex_file) is False) or (os.path.exists(run_parameters_file) is False):
-        print demultiplex_file + " or " + run_parameters_file + " does not exist"
-        quit()
-    else:
-        return xml_files_to_parse
-a = check(d)
-print a
+    demultiplex_file_opt1 = dir + "Unaligned/DemultiplexConfig.xml"
+    demultiplex_file_opt2 = dir + "DemultiplexConfig.xml"
+    run_parameters_file = dir + "runParameters.xml"
+    if (os.path.exists(demultiplex_file_opt1) is False) or (os.path.exists(run_parameters_file) is False):
+        if (os.path.exists(demultiplex_file_opt2) is False) or (os.path.exists(run_parameters_file) is False):
+            print "A required Illumina file is missing" #needs better message
+            quit()
+    elif (os.path.exists(demultiplex_file_opt1) is True):
+        xml_files_to_parse = (demultiplex_file_opt1,run_parameters_file)
+    elif (os.path.exists(demultiplex_file_opt2) is True):
+        xml_files_to_parse = (demultiplex_file_opt2,run_parameters_file)
+    return xml_files_to_parse
 
-config_file = "/Users/fcoldren/src/isatab-templates/assay_configuration_files/transcription_seq.xml"
-output_txt_file = sys.argv[1]
-
-a_config_tree = ET.parse(config_file)
-root = a_config_tree.getroot()
-prefix = "{http://www.ebi.ac.uk/bii/isatab_configuration#}" #prefix for ISA tags
-field_ = prefix + "field"
-unit_ = prefix + "unit-field"
-experiment_root = ET.Element("Experiment")
-
-# "/Users/fcoldren/scripts_tools/my_scripts/Illumina_files/DemultiplexConfig.xml"
-# this is the DemultiplexConfig.xml
-parameters = {}
-demultiplex_config_tree = ET.parse(a[0])
-demultiplex_root = demultiplex_config_tree.getroot()
+def make_ISATab_dir(dir):
+    ISATab_dir = d + "/ISATAB"
+    if os.path.exists(ISATab_dir) is False:
+        os.makedirs(ISATab_dir)
+    return ISATab_dir
 
 def make_new_sample_entry(root_config,root_experiment,sample_name):
     """Builds simplified xml structure based on an ISA-Tab xml config file"""
@@ -51,8 +45,11 @@ def make_new_sample_entry(root_config,root_experiment,sample_name):
     # element attribute value holds the column header text
     # element.get("value") returns the column header
 
+    prefix = "{http://www.ebi.ac.uk/bii/isatab_configuration#}" #prefix for ISA tags
+    unit_ = prefix + "unit-field"
+    
     #makes the xml structure for a sample
-    for element in root.iter():
+    for element in root_config.iter():
         x = str(element.get("header"))
         if "header" in element.attrib and (x.endswith("Name") or x.endswith("File")):
             last_node = ET.SubElement(sample_root,"column-header",value=element.get("header"))
@@ -116,13 +113,31 @@ def make_sample_row_as_list(sample_element):
                 sample_info.append(child.text)
     return sample_info
 
+illumina_xml_files = check(d) #check to see if the files exist and return file locations
+output_directory = make_ISATab_dir(d)
+
+# parse the assay config file
+a_config_tree = ET.parse(assay_config_file)
+ISA_assay_config_root = a_config_tree.getroot()
+
+demultiplex_config_tree = ET.parse(illumina_xml_files[0])
+demultiplex_root = demultiplex_config_tree.getroot()
+
+
+# dictionary will store experiment wide parameters
+parameters = {}
+
+# starting the xml container for holding parsed data
+experiment_root = ET.Element("Experiment")
+
 # puts lane information into samples' tag
+# and constructs the xml container for each sample
 for element in demultiplex_root.iter('Lane'):
     for child in element:
         if child.get('Index') != "Undetermined":
             child.set('lane',element.get('Number'))
             sample_name = child.get('SampleId')
-            assay = make_new_sample_entry(root,experiment_root,sample_name)
+            assay = make_new_sample_entry(ISA_assay_config_root,experiment_root,sample_name)
 
 # get non-sample specific info from DemultiplexConfig.xml
 for element in demultiplex_root:
@@ -144,7 +159,8 @@ for element in demultiplex_root.iter('Sample'):
                 if child.get('value') == "Parameter Value[lane]":
                     child.text = element.get('lane')
 
-run = parse_runParameters4isa(a[1],parameters)
+# get experiment wide parameters from runParameters.xml
+run = parse_runParameters4isa(illumina_xml_files[1],parameters)
 
 # fill in experiment wide parameters parsed from runParameters.xml
 # and DemultiplexConfig.xml to the xml structure for the samples
@@ -162,7 +178,9 @@ for element in assay.iter('column-header'):
 
 count = 0
 all = []
-outfile = open(output_txt_file, "w")
+
+output_assay_txt_file = output_directory + "/a_studyID_transcription profiling_nucleotide sequencing.txt"
+outfile = open(output_assay_txt_file, "w")
 for element in assay.iter("Sample"):
     j = element.get('name')
     sample_row = []
