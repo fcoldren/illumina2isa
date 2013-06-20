@@ -42,10 +42,14 @@ def make_new_sample_entry(root_config,root_experiment,sample_name):
             last_node = ET.SubElement(sample_root,"column-header",value="Protocol REF",protocol=element.get("protocol-type"))
         else:
             if "header" in element.attrib:
-                ET.SubElement(last_node,"column-header",value=element.get("header"))
+                non_node_column = ET.SubElement(last_node,"column-header",value=element.get("header"))
+                if element.get('is-forced-ontology') == 'true':
+                    ET.SubElement(non_node_column,"column-header",value='Term Source REF')
+                    ET.SubElement(non_node_column,"column-header",value='Term Accession Number')
             if element.tag == unit_:
-                unit_node = ET.SubElement(last_node,"column-header",value='Unit', unit_attr1 = 'Term Source REF', unit_attr2 = 'Term Accession Number')
-                ET.SubElement(unit_node,"column-header",value='Term Source REF'
+                unit_node = ET.SubElement(last_node,"column-header",value='Unit')
+                ET.SubElement(unit_node,"column-header",value='Term Source REF')
+                ET.SubElement(unit_node,"column-header",value='Term Accession Number')
     return root_experiment
 
 def parse_runParameters4isa(file,run_parameters_to_write):
@@ -125,15 +129,53 @@ for element in assay.iter('column-header'):
             if child.get('value') == "Date":
                 child.text = run["Date"]
 
+def make_row_in_ISATab(sample_element):
+    sample_info = []
+    for child in sample_element.iter("column-header"):
+            if child.get('value') == "Sample Name":
+                sample_info.append(j)
+            elif child.get('value') == "Protocol REF":
+                sample_info.append(child.get('protocol'))
+            elif child.text is None:
+                sample_info.append("")
+            else:
+                sample_info.append(child.text)
+    return sample_info
+
+of = sys.argv[1]
+outfile = open(of, "w")
 count = 0
-# write headers to file
+all = []
 for element in assay.iter("Sample"):
     j = element.get('name')
+    sample_info = []
     if count == 0:
         headers = []
-        for child in element.iter():
+        for child in element.iter("column-header"):
             headers.append(child.get('value'))
-        
+        outfile.write("\t".join(headers) + "\n")
+        count = 1
+        for child in element.iter("column-header"):
+            if child.get('value') == "Sample Name":
+                sample_info.append(j)
+            elif child.get('value') == "Protocol REF":
+                sample_info.append(child.get('protocol'))
+            elif child.text is None:
+                sample_info.append("")
+            else:
+                sample_info.append(child.text)
+    else:
+        for child in element.iter("column-header"):
+            if child.get('value') == "Sample Name":
+                sample_info.append(j)
+            elif child.get('value') == "Protocol REF":
+                sample_info.append(child.get('protocol'))
+            elif child.text is None:
+                sample_info.append("")
+            else:
+                sample_info.append(child.text)
+    all.append(sample_info)
 
-
-
+for i in all:
+    outfile.write("\t".join(i) + "\n")
+outfile.close()
