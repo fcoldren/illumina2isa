@@ -12,9 +12,11 @@ config_file = "/Users/fcoldren/src/isatab-templates/assay_configuration_files/tr
 f1 = "/Users/fcoldren/scripts_tools/my_scripts/Illumina_files/DemultiplexConfig.xml"
 f2 = "/Users/fcoldren/scripts_tools/my_scripts/Illumina_files/runParameters.xml"
 
+output_txt_file = sys.argv[1]
+
 a_config_tree = ET.parse(config_file)
 root = a_config_tree.getroot()
-prefix = "{http://www.ebi.ac.uk/bii/isatab_configuration#}"
+prefix = "{http://www.ebi.ac.uk/bii/isatab_configuration#}" #prefix for ISA tags
 field_ = prefix + "field"
 unit_ = prefix + "unit-field"
 experiment_root = ET.Element("Experiment")
@@ -25,9 +27,8 @@ parameters = {}
 demultiplex_config_tree = ET.parse(f1)
 demultiplex_root = demultiplex_config_tree.getroot()
 
-
 def make_new_sample_entry(root_config,root_experiment,sample_name):
-    """Builds simplified xml based on an ISA-Tab xml config file"""
+    """Builds simplified xml structure based on an ISA-Tab xml config file"""
     sample_root = ET.SubElement(root_experiment,"Sample",name=sample_name)
 
     # element attribute value holds the column header text
@@ -85,6 +86,19 @@ def parse_runParameters4isa(file,run_parameters_to_write):
     run_parameters_to_write["Parameter Value[quality score]"] = rta
     return run_parameters_to_write
 
+def make_sample_row_as_list(sample_element):
+    sample_info = []
+    for child in sample_element.iter("column-header"):
+            if child.get('value') == "Sample Name":
+                sample_info.append(j)
+            elif child.get('value') == "Protocol REF":
+                sample_info.append(child.get('protocol'))
+            elif child.text is None:
+                sample_info.append("")
+            else:
+                sample_info.append(child.text)
+    return sample_info
+
 # puts lane information into samples' tag
 for element in demultiplex_root.iter('Lane'):
     for child in element:
@@ -129,52 +143,23 @@ for element in assay.iter('column-header'):
             if child.get('value') == "Date":
                 child.text = run["Date"]
 
-def make_row_in_ISATab(sample_element):
-    sample_info = []
-    for child in sample_element.iter("column-header"):
-            if child.get('value') == "Sample Name":
-                sample_info.append(j)
-            elif child.get('value') == "Protocol REF":
-                sample_info.append(child.get('protocol'))
-            elif child.text is None:
-                sample_info.append("")
-            else:
-                sample_info.append(child.text)
-    return sample_info
-
-of = sys.argv[1]
-outfile = open(of, "w")
 count = 0
 all = []
+outfile = open(output_txt_file, "w")
 for element in assay.iter("Sample"):
     j = element.get('name')
-    sample_info = []
+    sample_row = []
     if count == 0:
         headers = []
         for child in element.iter("column-header"):
             headers.append(child.get('value'))
         outfile.write("\t".join(headers) + "\n")
         count = 1
-        for child in element.iter("column-header"):
-            if child.get('value') == "Sample Name":
-                sample_info.append(j)
-            elif child.get('value') == "Protocol REF":
-                sample_info.append(child.get('protocol'))
-            elif child.text is None:
-                sample_info.append("")
-            else:
-                sample_info.append(child.text)
+        sample_row = make_sample_row_as_list(element)
+        print sample_row
     else:
-        for child in element.iter("column-header"):
-            if child.get('value') == "Sample Name":
-                sample_info.append(j)
-            elif child.get('value') == "Protocol REF":
-                sample_info.append(child.get('protocol'))
-            elif child.text is None:
-                sample_info.append("")
-            else:
-                sample_info.append(child.text)
-    all.append(sample_info)
+        sample_row = make_sample_row_as_list(element)
+    all.append(sample_row)
 
 for i in all:
     outfile.write("\t".join(i) + "\n")
