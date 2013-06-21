@@ -16,8 +16,8 @@ d = sys.argv[1]
 
 
 assay_config_file = "/Users/fcoldren/src/isatab-templates/ISATab_configuration_files_2012-06-20/transcription_seq.xml"
-#study_config_file = "/Users/fcoldren/src/isatab-templates//Users/fcoldren/src/isatab-templates/ISATab_configuration_files_2012-06-20/studySample.xml"
-#investigation_config_file ="/Users/fcoldren/src/isatab-templates//Users/fcoldren/src/isatab-templates/ISATab_configuration_files_2012-06-20/investigation.xml"
+study_config_file = "/Users/fcoldren/src/isatab-templates/ISATab_configuration_files_2012-06-20/studySample.xml"
+#investigation_config_file ="/Users/fcoldren/src/isatab-templates/ISATab_configuration_files_2012-06-20/investigation.xml"
 
 def check(dir):
     """ Checks that specified directory exists and is specified correctly """
@@ -37,9 +37,7 @@ def check(dir):
         xml_files_to_parse = (demultiplex_file_opt1,run_parameters_file)
     elif (os.path.exists(demultiplex_file_opt2) is True):
         xml_files_to_parse = (demultiplex_file_opt2,run_parameters_file)
-    print xml_files_to_parse
     return xml_files_to_parse
-
 
 def make_ISATab_dir(dir):
     ISATab_dir = d + "/ISATAB/"
@@ -125,10 +123,14 @@ def make_sample_row_as_list(sample_element):
 illumina_xml_files = check(d) #check to see if the files exist and return file locations
 output_directory = make_ISATab_dir(d)
 
-# parse the assay config file
+# parse the ISA-Tab config files
 a_config_tree = ET.parse(assay_config_file)
 ISA_assay_config_root = a_config_tree.getroot()
+s_config_tree = ET.parse(study_config_file)
+ISA_study_config_root = s_config_tree.getroot()
 
+
+# parse DemultiplexConfig.xml
 demultiplex_config_tree = ET.parse(illumina_xml_files[0])
 demultiplex_root = demultiplex_config_tree.getroot()
 
@@ -138,15 +140,20 @@ parameters = {}
 
 # starting the xml container for holding parsed data
 experiment_root = ET.Element("Experiment")
+study_container_root = ET.Element("Study")
 
 # puts lane information into samples' tag
 # and constructs the xml container for each sample
+# for assay file and study file
 for element in demultiplex_root.iter('Lane'):
     for child in element:
         if child.get('Index') != "Undetermined":
             child.set('lane',element.get('Number'))
             sample_name = child.get('SampleId')
             assay = make_new_sample_entry(ISA_assay_config_root,experiment_root,sample_name)
+            study = make_new_sample_entry(ISA_study_config_root,study_container_root,sample_name)
+
+ET.dump(study)
 
 # get non-sample specific info from DemultiplexConfig.xml
 for element in demultiplex_root:
@@ -189,7 +196,10 @@ count = 0
 all = []
 
 output_assay_txt_file = output_directory + "/a_studyID_transcription profiling_nucleotide sequencing.txt"
-outfile = open(output_assay_txt_file, "w")
+output_study_txt_file = output_directory + "/s_studyID.txt"
+outfile_assay = open(output_assay_txt_file, "w")
+
+#def write_to_file(output_file,xml_holder):
 for element in assay.iter("Sample"):
     j = element.get('name')
     sample_row = []
@@ -197,7 +207,7 @@ for element in assay.iter("Sample"):
         headers = []
         for child in element.iter("column-header"):
             headers.append(child.get('value'))
-        outfile.write("\t".join(headers) + "\n")
+        outfile_assay.write("\t".join(headers) + "\n")
         count = 1
         sample_row = make_sample_row_as_list(element)
     else:
@@ -205,5 +215,5 @@ for element in assay.iter("Sample"):
     all.append(sample_row)
 
 for i in all:
-    outfile.write("\t".join(i) + "\n")
-outfile.close()
+    outfile_assay.write("\t".join(i) + "\n")
+outfile_assay.close()
