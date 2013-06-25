@@ -1,0 +1,51 @@
+<DemultiplexConfig>
+  <Software Version="CASAVA-1.8.1" CmdAndArgs="/ifs/apps/CASAVA/current/bin/configureBclToFastq.pl --input-dir Data/Intensities/BaseCalls --output-dir ./Unaligned --fastq-cluster-count 10000000 --sample-sheet SampleSheet_48669.csv" Name="configureBclToFastq.pl">
+    <Software Version="1.12.4.2" Name="RTA">
+      <Software Version="1.12.4.2" Name="RTA">
+        <Software Version="1.4.8" Platform="HiSeq" Name="HiSeq Control Software" />
+      </Software>
+    </Software>
+  </Software>
+  <FlowcellInfo ID="C0HP8ACXX" Operator="" Recipe="" Desc="">
+    <Lane Number="1">
+      <Sample ProjectId="48669" Control="N" Index="AGTCAA" SampleId="4146" Desc="RNA Seq" Ref="mm9" />
+      <Sample ProjectId="48669" Control="N" Index="AGTTCC" SampleId="4126" Desc="RNA Seq" Ref="mm9" />
+      <Sample ProjectId="Undetermined_indices" Control="N" Index="Undetermined" SampleId="lane1" Desc="Clusters with unmatched barcodes for lane 1" Ref="unknown" />
+    </Lane>
+    <Lane Number="2">
+      <Sample ProjectId="48669" Control="N" Index="AGTCAA" SampleId="4147" Desc="RNA Seq" Ref="mm9" />
+      <Sample ProjectId="48669" Control="N" Index="ATGTCA" SampleId="4138" Desc="RNA Seq" Ref="mm9" />
+      <Sample ProjectId="Undetermined_indices" Control="N" Index="Undetermined" SampleId="lane2" Desc="Clusters with unmatched barcodes for lane 2" Ref="unknown" />
+    </Lane>
+    <Lane Number="3">
+      <Sample ProjectId="48669" Control="N" Index="AGTCAA" SampleId="4148" Desc="RNA Seq" Ref="mm9" />
+      <Sample ProjectId="48669" Control="N" Index="AGTTCC" SampleId="4128" Desc="RNA Seq" Ref="mm9" />
+      <Sample ProjectId="Undetermined_indices" Control="N" Index="Undetermined" SampleId="lane3" Desc="Clusters with unmatched barcodes for lane 3" Ref="unknown" />
+    </Lane>
+    <Lane Number="4">
+      <Sample ProjectId="48669" Control="N" Index="AGTCAA" SampleId="4149" Desc="RNA Seq" Ref="mm9" />
+      <Sample ProjectId="48669" Control="N" Index="ATGTCA" SampleId="4139" Desc="RNA Seq" Ref="mm9" />
+      <Sample ProjectId="Undetermined_indices" Control="N" Index="Undetermined" SampleId="lane4" Desc="Clusters with unmatched barcodes for lane 4" Ref="unknown" />
+    </Lane>
+    <Lane Number="5">
+      <Sample ProjectId="48669" Control="N" Index="AGTCAA" SampleId="4151" Desc="RNA Seq" Ref="mm9" />
+      <Sample ProjectId="48669" Control="N" Index="AGTTCC" SampleId="4129" Desc="RNA Seq" Ref="mm9" />
+      <Sample ProjectId="Undetermined_indices" Control="N" Index="Undetermined" SampleId="lane5" Desc="Clusters with unmatched barcodes for lane 5" Ref="unknown" />
+    </Lane>
+    <Lane Number="6">
+      <Sample ProjectId="48669" Control="N" Index="AGTCAA" SampleId="4153" Desc="RNA Seq" Ref="mm9" />
+      <Sample ProjectId="48669" Control="N" Index="ATGTCA" SampleId="4140" Desc="RNA Seq" Ref="mm9" />
+      <Sample ProjectId="Undetermined_indices" Control="N" Index="Undetermined" SampleId="lane6" Desc="Clusters with unmatched barcodes for lane 6" Ref="unknown" />
+    </Lane>
+    <Lane Number="7">
+      <Sample ProjectId="48669" Control="N" Index="AGTCAA" SampleId="4154" Desc="RNA Seq" Ref="mm9" />
+      <Sample ProjectId="48669" Control="N" Index="AGTTCC" SampleId="4130" Desc="RNA Seq" Ref="mm9" />
+      <Sample ProjectId="Undetermined_indices" Control="N" Index="Undetermined" SampleId="lane7" Desc="Clusters with unmatched barcodes for lane 7" Ref="unknown" />
+    </Lane>
+    <Lane Number="8">
+      <Sample ProjectId="48669" Control="N" Index="AGTCAA" SampleId="4155" Desc="RNA Seq" Ref="mm9" />
+      <Sample ProjectId="48669" Control="N" Index="ATGTCA" SampleId="4141" Desc="RNA Seq" Ref="mm9" />
+      <Sample ProjectId="Undetermined_indices" Control="N" Index="Undetermined" SampleId="lane8" Desc="Clusters with unmatched barcodes for lane 8" Ref="unknown" />
+    </Lane>
+  </FlowcellInfo>
+</DemultiplexConfig>
