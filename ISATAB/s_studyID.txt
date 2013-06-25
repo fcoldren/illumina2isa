@@ -1,0 +1,17 @@
+Source Name	Characteristics[organism]	Protocol REF	Sample Name
+		sample collection	4146
+		sample collection	4126
+		sample collection	4147
+		sample collection	4138
+		sample collection	4148
+		sample collection	4128
+		sample collection	4149
+		sample collection	4139
+		sample collection	4151
+		sample collection	4129
+		sample collection	4153
+		sample collection	4140
+		sample collection	4154
+		sample collection	4130
+		sample collection	4155
+		sample collection	4141
