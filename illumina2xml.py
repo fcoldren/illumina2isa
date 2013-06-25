@@ -11,28 +11,7 @@ import os
 # 3: runParameters.xml
 
 # directory where DemultiplexConfig.xml and runParameters.xml live
-# test locally using "/Users/fcoldren/scripts_tools/my_scripts/Illumina_files"
 d = sys.argv[1]
-
-assay_config_file = "/Users/fcoldren/src/isatab-templates/ISATab_configuration_files_2012-06-20/transcription_seq.xml"
-study_config_file = "/Users/fcoldren/src/isatab-templates/ISATab_configuration_files_2012-06-20/studySample.xml"
-#investigation_config_file ="/Users/fcoldren/src/isatab-templates/ISATab_configuration_files_2012-06-20/investigation.xml"
-
-# check that the directory exists and is in right format
-if os.path.exists(d) is False:
-    print d, " does not exist"
-    quit()
-
-if d.endswith("/") is False:
-    d = d + "/"
-
-# make the ISATAB directory
-ISATab_dir = d +"ISATAB/"
-if os.path.exists(ISATab_dir) is True:
-    print "ISATab has already been created for this study"
-    quit()
-if os.path.exists(ISATab_dir) is False:
-    os.makedirs(ISATab_dir)
 
 def check_for_Illumina_files(dir):
     """ Checks for files in the specified directory and returns paths of those files """
@@ -124,6 +103,45 @@ def make_sample_row_as_list(sample_element, sample_name):
                 sample_info.append(child.text)
     return sample_info
 
+def write_to_file(output,xml_holder):
+    output_file = open(output, "w")
+    count = 0
+    all = []
+    for element in xml_holder.iter("Sample"):
+        j = element.get('name') # this is the sample name
+        sample_row = []
+        if count == 0:
+            headers = []
+            for child in element.iter("column-header"):
+                headers.append(child.get('value'))
+            output_file.write("\t".join(headers) + "\n")
+            count = 1
+            sample_row = make_sample_row_as_list(element,j)
+        else:
+            sample_row = make_sample_row_as_list(element,j)
+        all.append(sample_row)
+    for i in all:
+        output_file.write("\t".join(i) + "\n")
+    output_file.close()
+
+assay_config_file = "/Users/fcoldren/src/isatab-templates/ISATab_configuration_files_2012-06-20/transcription_seq.xml"
+study_config_file = "/Users/fcoldren/src/isatab-templates/ISATab_configuration_files_2012-06-20/studySample.xml"
+
+# check that the directory exists and is in right format
+if os.path.exists(d) is False:
+    print d, " does not exist"
+    quit()
+if d.endswith("/") is False:
+    d = d + "/"
+
+# make the ISATAB directory
+ISATab_dir = d +"ISATAB/"
+if os.path.exists(ISATab_dir) is True:
+    print "ISATab has already been created for this study"
+    quit()
+if os.path.exists(ISATab_dir) is False:
+    os.makedirs(ISATab_dir)
+
 illumina_xml_files = check_for_Illumina_files(d)
 
 # parse the ISA-Tab config files
@@ -132,29 +150,25 @@ ISA_assay_config_root = a_config_tree.getroot()
 s_config_tree = ET.parse(study_config_file)
 ISA_study_config_root = s_config_tree.getroot()
 
-
 # parse DemultiplexConfig.xml
 demultiplex_config_tree = ET.parse(illumina_xml_files[0])
 demultiplex_root = demultiplex_config_tree.getroot()
 
-
 # dictionary will store experiment wide parameters
 parameters = {}
-
 # starting the xml container for holding parsed data
 experiment_root = ET.Element("Experiment")
 study_container_root = ET.Element("Study")
 
-# puts lane information into samples' tag
-# and constructs the xml container for each sample
+# puts lane information into samples' tag, construct xml container per sample
 # for assay file and study file
 for element in demultiplex_root.iter('Lane'):
-    for child in element:
-        if child.get('Index') != "Undetermined":
-            child.set('lane',element.get('Number'))
-            sample_name = child.get('SampleId')
-            assay = make_new_sample_entry(ISA_assay_config_root,experiment_root,sample_name)
-            study = make_new_sample_entry(ISA_study_config_root,study_container_root,sample_name)
+     for child in element:
+         if child.get('Index') != "Undetermined":
+             child.set('lane',element.get('Number'))
+             sample_name = child.get('SampleId')
+             assay = make_new_sample_entry(ISA_assay_config_root,experiment_root,sample_name)
+             study = make_new_sample_entry(ISA_study_config_root,study_container_root,sample_name)
 
 # get non-sample specific info from DemultiplexConfig.xml
 for element in demultiplex_root:
@@ -181,7 +195,6 @@ run = parse_runParameters4isa(illumina_xml_files[1],parameters)
 
 # fill in experiment wide parameters parsed from runParameters.xml
 # and DemultiplexConfig.xml to the xml structure for the samples
-
 for element in assay.iter():
     for key in run:
         if key != "Date" and element.get('value') == key:
@@ -195,27 +208,13 @@ for element in assay.iter('column-header'):
 
 output_assay_txt_file = ISATab_dir + "a_studyID_transcription profiling_nucleotide sequencing.txt"
 output_study_txt_file = ISATab_dir + "s_studyID.txt"
-
-def write_to_file(output,xml_holder):
-    output_file = open(output, "w")
-    count = 0
-    all = []
-    for element in xml_holder.iter("Sample"):
-        j = element.get('name') # this is the sample name
-        sample_row = []
-        if count == 0:
-            headers = []
-            for child in element.iter("column-header"):
-                headers.append(child.get('value'))
-            output_file.write("\t".join(headers) + "\n")
-            count = 1
-            sample_row = make_sample_row_as_list(element,j)
-        else:
-            sample_row = make_sample_row_as_list(element,j)
-        all.append(sample_row)
-    for i in all:
-        output_file.write("\t".join(i) + "\n")
-    output_file.close()
+output_investigation_txt_file = ISATab_dir + "i_Investigation.txt"
 
 write_to_file(output_assay_txt_file,assay)
 write_to_file(output_study_txt_file,study)
+
+i = open("/Users/fcoldren/src/illumina2isa/i_Investigation.txt")
+i_data_in = i.read()
+out = open(output_investigation_txt_file, 'w')
+out.write(i_data_in)
+print("ISATab created")
